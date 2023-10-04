@@ -1,0 +1,320 @@
+웹 어플리케이션 개념
+*클라이언트-서버 모델
+    클라이언트는 사용자가 직접 사용하는 컴퓨터나 장치, 서버는 네트워크를 통해 클라이언트에게 서비스를 제공하는 컴퓨터 시스템
+    클라이언트는 서버에 요청(Request)을 보내고, 서버는 그 요청에 대한 응답(Response)을 반환한다.
+*HTTP 프로토콜
+    웹 어플리케이션에서 데이터를 주고 받기 위한 통신 규약
+    요청과 응답을 메세지 형태의 데이터로 전송한다.
+*요청/응답 메커니즘
+    요청 메세지에는 요청 방식(GET, POST 등), 경로(URL), 헤더(Header), 본문(body) 등의 정보가 포함된다.
+    응답 메세지에는 상태 코드(200 ok, 404 not found 등), 헤더, 본문 등의 정보가 포함된다.
+
+서블릿(Servlet) : Java를 사용하여 웹 페이지를 동적으로 생성하는 서버 측의 프로그램
+Servlet API를 사용하면 개발자는 요청에 따라 웹 페이지를 동적으로 생성하고, 데이터 베이스와 상호작용하고, 네트워크 서비스를 처리할 수 있다.
+*정의 : 서블릿은 자바 클래스다. HTTP 요청을 받아 처리하고 HTTP응답을 생성하는 역할을 한다.
+*요청 처리 : 클라이언트에서 보내는 HTTP 요청 메소드(GET, POST 등)를 받아들여 해당 요청에 대한 로직을 처리한다.
+*응답 생성 : 로직 생성 결과에 따라 응답 데이터를 만들어 클라이언트에게 반환한다.(HTML or JSON)
+*세션 관리 : HTTP는 상태 정보를 유지하지 않는 Stateless 프로토콜이다. 서블릿도 세션(Session) 객체를 활용하여 상태정보 유지가 가능하다.
+*서블릿 컨테이너 : 서블릿은 서블릿 컨테이너 혹은 웹 컨테이너라고 불리는 컴포넌트 내에서 실행된다.
+    이 컨테이너가 서블릿의 생명주기 관리(init(), service(), destroy() 메소드), 멀티스레딩 지원 등의 기능을 담당한다.
+
+1.서블릿의 생명주기(Lifecycle) : 서블릿이 생성되고, 요청을 처리하고, 마지막으로 소멸하는 과정을 의미한다.
+    *init() : 서블릿이 최초로 생성될 때 한 번만 호출되는 메소드
+        이 메소드는 보통 초기화 로직을 포함하며, 서블릿 컨테이너가 클라이언트로부터 첫 요청을 받았을 때 호출된다.
+        만약 서블릿에 설정된 로딩 시점이 시작 시점인 경우 웹 어플리케이션 배포 이후 초기화 과정에서 호출될 수 있다.
+    *service() : 클라이언트의 모든 요청에 대해 호출되는 메소드
+        이 메소드 안에서 HTTP 요청 방식(GET, POST 등)에 따라 적절한 메소드(doGET(), doPOST() 등)를 호출하여 실제 로직을 처리한다.
+    *destroy() : 서블릿 인스턴스가 소멸되기 전에 한 번만 호출되는 메소드
+        이 메소드 안에서 리소스 해체, 정리 작업같은 동료 작업들을 처리한다.
+    *예시 : 처음 클라이언트의 요청으로 해당 서블릿 클래스가 필요할 때, 컨테이너는 해당 클래스를 로딩하여 인스턴스화하고 
+        init()메소드를 실행시켜 초기화 작업을 진행 -> 클라이언트의 모든 요청마다 service() [doGET(), doPOST(), doPUT(), doDELETE()]
+        와 같은 HTTP method-specific 함수들이 실행된다. -> 웹 어플리케이션이 종료되거나 리로딩되거나 해당 클래스가 더 이상 필요하지않을 경우
+        destroy() 함수가 실행되어 종료작업을 처리한다.
+2.요청과 응답 처리
+클라이언트로부터 들어오는 요청을 어떻게 처리하고 결과를 반환하는지에 대한 과정을 보여준다.
+    *HttpServletRequest : 클라이언트의 요청 정보를 담고 있는 객체
+        이 객체를 통해 HTTP 메소드(GET, POST 등), URL, 헤더, 본문, 쿼리 스트링, 쿠키 등 다양한 요청 정보에 접근할 수 있다.
+        세션 관리 기능도 제공한다.
+    *HttpServletResponse : 클라이언트에게 보낼 응답을 담는 객체
+        개발자는 해당 객체에 상태코드, 헤더, 본문, 쿠키 설정 등을 넣을 수 있다.
+        출력 스트림을 사용하여 동적인 HTML 페이지나 JSON 데이터 등 응답 본문을 작성할 수 있다.
+    *과정 : 클라이언트가 HTTP 요청을 보낸다. -> 서블릿 컨테이너가 해당 요청을 받아 적절한 서블릿을 전달한다.
+        -> 서블릿 컨테이너는 HttpServletRequest, HttpServletResponse 객체를 생성하고, 해당 서블릿의 service() 등의 메소드 인자로 전달한다.
+        -> 개발자가 구현한 로직 내에서 HttpServletRequest 객체로부터 필요한 데이터를 추출하여 비즈니스 로직을 수행한다.
+        -> 비즈니스 로직의 결과값 혹은 반환 페이지 정보 등으로  HttpServletResponse 객체를 설정하거나 직접 출력 스트림으로 반환값을 내보낸다.
+        -> service() 메소드 등의 호출이 종료되면 HttpServletResponse 객체가 가진 정보로 HTTP 응답메세지를 만들어 클라이언트에게 전송한다.
+3.세션 관리
+클라이언트가 처음 요청을 보낼 때 서버는 HttpSession 객체를 생성하고 고유한 세션 ID를 부여한다.
+서버는 응답할 때 이 세션ID를 쿠키가 URL리라이팅 등의 방식으로 클라이언트에게 전송한다.
+클라이언트가 다시 요청을 보낼 때마다 해당 세션 ID가 함께 전송되어 해당 ID로 HttpSession 객체를 찾아 사용자 정보에 접근할 수 있다.
+필요에 따라 개발자는 HttpSession 객체에 속성(Attribute)을 추가하거나 제거하여 필요한 데이터를 저장하거나 조회할 수 있다.
+
+4.장단점
+*장점
+    효율성 : 한 번 로딩된 이후에는 메모리에 계속 유지되므로 각 요청마다 새로운 프로세스나 스레드를 생성하지 않아도 되낟.
+        따라서, CGI(Common Gateway Interface) 등의 기술보다 처리속도가 빠르고 자원 사용량이 적다.
+    편리함 : Java를 사용하여 개발하므로 객체 지향적 코드 작성이 가능하며 재사용가능한 클래스 라이브러리를 활용할 수 있다.
+    보안성 : 자바 언어의 보안 관련 기능들과 웹 컨테이너에서 제공하는 인증 및 권한 관리 기능들을 사용할 수 있다.
+    표준화 : 자바 EE(Enterprise Edition) 스펙의 일부로 정의되어 있어 다양한 웹 컨테이너에서 호환될 수 있다.
+*단점
+    상태 관리 : HTTP 프로토콜은 Stateless 특성 때문에 상태정보 유지를 위해서는 추가적인 작업이 필요하다.
+    비즈니스 로직과 프레젠테이션 로직의 혼합 : 서블릿 코드 내에서 HTML을 직접 작성하는 경우 비즈니스 로직과 프레젠테이션 로직이 혼합되어
+        코드 가독성과 유지 보수성이 떨어질 수 있다. 이러한 문제는 JSP(JavaServer Pages) 등의 기술로 해결한다.
+    개발 및 배포 복잡성 : 이러한 문제는 스프링 부트(SPrign Boot)와 같은 프레임워크를 사용하여 간소화할 수 있다.
+
+서블릿 클래스 구조
+서블릿 클래스는 주로 Javax.servlet.Servlet 인터페이스를 구햔하거나,
+Javax.servlet.http/httpServle클래스를 상속하여 작성한다.
+*패키지 및 임포트 : 서블릿 클래스에 적절한 패키지를 추가해야한다.
+    javax.servlet 패키지와 java.servlet.http 패키지를 임포트 해야한다.
+*클래서 선언 : 서블릿 클래스는 일반적으로 HttpServlet을 상속한다.
+    public class NewServlet extends HttpServlet{}
+*생명주기 메소드 : init(), service(), destroy() 등을 오버라이딩하여 구현한다.
+*HTTP 요청 처리 : HTTP 요청에 따라 적절한 메소드(doGET(), doPOST() 등)를 오버라이딩하여 구현한다.
+*응답 생성 : HttpServletResponse 객체를 사용하여 응답 데이터, 상태 코드, 헤더 정보 혹은 출력 스트림으로 동적 컨텐츠를 작성한다.
+*추가적으로 세션 관리 (HttpSession), 쿠키 사용(Cookie)등과 같은 기능을 사용할 수 있다.
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.io,IOException;
+
+public class NewServlet extends HttpServlet{
+    @Override
+    public void init(){
+        //초기화 작업
+    }
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException{
+        String name = request.getParameter("name");
+        response.setContentType("text/html");
+        response.getWriter().println("<h1>Hello, " + name + "</h1>");
+    }
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException{
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        if(isValidUser(username, password)){
+            response.setStatus(HttpServletResponse.SC_OK); #200
+            response.getWriter().println("로그인 성공!!");
+        }else{
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); #401
+            response.getWriter().println("로그인 실패!!");
+        }
+    }
+    private boolean isValidUser(String username, String password){
+        return username.equals("admin") && password.equals("password");
+    }
+    @Override
+    public void destroy(){
+        //종료작업
+    }
+}
+
+HttpServletRequest
+*getRequestURI() / setReqeustURL : 클라이언트가 요청한 URI, URL을 반환한다.
+*getMethod() : HTTP 요청 메소드를 문자열로 반환한다.
+*getParameter(String name) : 요청 파라미터 중 지정한 이름의 값을 반환한다.
+*getParameterValues(String name) : 동일한 이름을 가진 모든 요청 파라미터의 값을 문자열로 반환한다.
+*getParameterNames() / getParameterMap() : 모든 요청 파라미터의 이름들을 Enum형태 혹은 Map 형태로 반환한다.
+*getHeader(String name) : 지정한 이름의 HTTP 헤더 값을 문자열로 반환한다.
+*getHeaders(String name) / getHeaderNames() : 지정한 이름의 모든 HTTP 헤더 값들. 모든 헤더 이름들을 열거형으로 반환
+*getCookies() : 요청에 포함된 모든 쿠키 객체를 배열로 반환한다.
+*getSession(boolean create) : 현재 세션 객체(HttpSession)를 가져온다. 인자값이 없으면 새로 생성할지 결정할 수 있다.
+
+package com.example.spring01;
+
+import java.io.IOException;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
+
+public class RequestServlet extends HttpServlet {
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		System.out.println("Requset URI : " + request.getRequestURL()); # 요청 URL 출력
+		
+		System.out.println("Requset Method : " + request.getMethod()); # 요청 메소드 출력
+		
+        # 모든 파라미터들의 이름과 값
+		for(String paramName : request.getParameterMap().keySet()) {
+			String[] paramValues = request.getParameterValues(paramName);
+			for(String value : paramValues) {
+				System.out.println("Name : " + paramName + ", Value : " + value);
+			}
+		}
+		
+        #모든 헤더들의 이름과 값
+		java. util.Enumeration<String> headerNames = request.getHeaderNames();
+		
+		while(headerNames.hasMoreElements()) {
+			String headerName =headerNames.nextElement();
+			System.out.println("Header Name : " + headerName + ", Value : " + request.getHeader(headerName));
+		}
+		
+        # 쿠키 정보 출력
+		Cookie[] cookies = request.getCookies();
+		
+		if(cookies != null) {
+			for(Cookie cookie : cookies) {
+				System.out.println("Cookie Name : " + cookie.getName() + ", Value : " + cookie.getValue());
+			}
+		}
+	}
+
+}
+
+HttpServletResponse
+*setStatus(int sc) : HTTP 응답 상태를 설정한다.
+*sendError(int sc, String msg) : 에러코드와 에러메세지를 클라이언트에게 전송한다.
+*setContentType(String type) : 응답의 컨텐츠 타입을 설정한다. HTML 문서로 반환하는 경우 : text/html
+    JSON 데이터를 반환하는 경우 : application/json
+*setHeader(String name, String value) / addHeader(String name, String value)
+    HTTP 헤더의 이름과 값을 추가한다. setHeader : 덮어쓰기, addHeader : 새 값을 추가
+*getWriter()/ getOutputStream() : 클라이언트에게 전송될 응답 본문을 작성하기 위한 출력 스트림을 반환한다.
+*addCookie(Cookie cookie) : 새로운 쿠키 객체(javax.servlet.http.Cookie)를 응답에 추가한다.
+*sendRedirect(String location) : 클라이언트에게 지정된 URL로 리다이렉션하도록 지시하는 302 상태코드롸 location 헤더 값을 설정하여 전송한다.
+
+package com.example.spring01;
+
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+public class ResponseServlet extends HttpServlet{
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
+		//컨텐츠 타입 설정
+		response.setContentType("text/html");
+		
+		PrintWriter out = response.getWriter();
+		
+		out.println("<html>");
+		out.println("<head><title>response sample</title></head>");
+		out.println("<body>");
+		out.println("<h1>리스폰 예제 페이지</h1>");
+		out.println("</body>");
+		out.println("</html>");
+		
+		out.close();
+	}
+
+}
+
+----------------------------
+서블릿 정보 등록
+1. web.xml을 사용한 서블릿 등록
+    web.xml 파일에 <servlet> 대그와 <servlet-mapping> 태그를 사용하여 서블릿클래스와 URL패턴을 매핑
+        <web-app>
+            <servlet>
+                <servlet-name>myServlet</servlet-name>
+                <servler-class>com.example.MyServlet</servlet-class>
+            </servlet>
+            <servlet-mapping>
+                <servlet-name>myServlet</servlet-name>
+                <url-pattern>/servlet</url-pattern>
+            </servlet-mapping>
+        </web-app>
+    MyServlet 클래스를 /servlet URL에 패턴에 매핑하였다.
+2.어노테이션을 사용한 서블릿 등록
+    Java Servlet 3.0부터 어노테이션 기반으로 서블릿 정보등록이 가능해졌다.
+    @WebServlet("/servlet")
+
+--------------------------
+페이지 이동
+*리다이렉트(Redirect)
+    리다이렉트는 클라이언트에게 특정 URL로 재요청하도록 지시하는 방식
+    서버는 클라이언트 요청을 받아 처리한 루 상태 코드 302 or 301 등으로 설정하고, location헤더에
+    새로운 URL을 담아 응답한다. 이후 클라이언트는 이 응답을 받고 새 URL로 재요청을 보낸다.
+    response.sendRedirect("/newURL");
+    두 번의 요청/응답을 거친다.
+    원래 요청 정보가 유지되지 않는다.
+    주소창 URL이 변경된다.
+    GET메소드만 사용할 수 있다.
+*포워드(Forward)
+    포워드는 서버 내부에서 페이지 이동을 처리하는 방식
+    서버가 클라이언트의 요청을 받고, 해당 요청과 응답 객체를 다른 서블릿, JSP등에 전달(forward)한다.
+    해당 서블릿, JSP등을 이어받아 처리 결과를 생성하여 클라이언트에게 응답한다.
+    RequestDispatcher dispatcher = request.getRequestDispatcher("newURL");
+    dispatcher.forward(request, response);
+    한 번의 요청/응답을 거친다.
+    원래 요청 정보가 유지된다.
+    주소창 URL이 변경되지 않는다.
+
+---------------------------
+정보 공유
+정보공유는 주로 세가지 범위에서 이루어진다. 요청(request), 세션(session), 어플리케이션(application)
+1. 요청 범위(Request Scope)
+    요청 범위는 한 번의 HTTP 요청을 처리하는 동안 유지되는 정보
+    request.setAttribute("myAttribute", "hello");
+    String myAttribute = (String) request.getAttribute("myAttribute");
+2. 세션 범위 (Session Scope)
+    세션 범위는 클라이언트가 웹 사이트에 접속한 후부터 브라우저를 닫거나 로그아웃 하기 전까지 유지되는 정보
+    HttpSession session = request.getSession();
+    session.setAttibute("user", user);
+    User user = (User) session.getAttribute("user");
+3. 어플리케이션 범위(Application Scope)
+    어플리케이션이 시작되고 종료되기 전까지 유지되며 모든 사용자가 공유하는 정보
+    ServletContext application = getServletContext();
+    application.setAttribute("appData", data);
+    Object data = application.getAttribute("appData");
+
+요청 범위 : 한 번의 HTTP 요청/응답 사이클 동안만 필요한 임시 데이터 저장
+세션 범위 : 한 클라이언트의 여러 요청에 유지되어야 하는 데이터를 저장
+어플리케이션 범위 : 어플리케이션 전체에서 공유되어야 하는 데이터를 저장
+
+1. 학생정보등록
+2. 성적 조회
+3. 전체 성적 분석
+
+작업 -> doGet(), doPost()
+초기화 -> init() : 서블릿 요청시 최초 1번
+종료 -> destroy() : 서블릿이 요청을 수행한 뒤 메모리에서 소멸될 때
+
+JSP(Java Server Pages)
+HTML 코드에 Java 코드를 삽입하여 동적인 웹 페이지를 생성하는 기술
+JSP는 자바 서블릿 기반으로 클라이언트의 요청에 따라 HTML, XML 등의 웹 문서를 생성한다.
+
+*동적 웹 컨텐츠 생성 : JSP는 사용자의 요청에 따라 실시간으로 변하는 웹 페이지를 만드는데 사용된다.
+*프레젠테이션 로직 구현 : 비즈니스 로직과 프레젠테이션 로직을 분리 개발 가능
+    JSP페이지에서 HTML 태그와 Java 코드를 함께 작성하여 로직을 쉽게 구현할 수 있다.
+    HTML은 정적인 웹 페이지만 개발 가능하지만, JSP에서 Java를 사용하여 모든 기능을 활용할 수 있다.
+*MVC(Model-View-Controller) 패턴 : JSP는 주로 View 역할
+*세션 관리 : JSP는 HTTP세션을 관리하는 기능을 제공한다.
+
+JSP, 서블릿 차이점
+코드 : 서블릿은 순수한 자바 코드로 구성, HTML 태그는 문자열 형태로 출력
+    JSP는 HTML 안에 자바코드를 추가하여 웹 페이지 생성 가능
+로직 : 서블릿은 비즈니스 로직을 처리하는데 주로 사용된다.
+    JSP는 프레젠테이션 로직, 클라이언트에게 보여지는 View에 초점을 맞추어 사용된다.
+변환 및 실행 : 서블릿은 클라이언트의 요청마다 해당 메소드(doGet(), doPost() 등)가 호출된다.
+    JSP는 처음 요청 시 내부적으로 서블릿으로 변환 후에 컴파일되어 실행된다. 동일한 요청이 들어올 시 이미 컴파일된 서블릿 코드가 실행된다.
+
+JSP 작동 방식
+클라이언트가 JSP 페이지를 요청하면 웹 컨테이너(Tomcat)는 해당 JSP 파일을 서블릿 클래스로 변환하고 컴파일한다.
+컴파일된 서블릿은 클라이언트의 요청 처리 후 응답을 반환한다.
+
+클라이언트 요청 -> JSP 파일 확인 -> 서블릿 변환 및 컴파일 -> 서블릿 실행 -> 응답 생성 및 반환
+-> 재요청 처리
+
+JSP 지시어(Directives)
+*page 지시어 : 페이지 전체에 적용되는 속성(import, error page, 세션 사용 여부, 버퍼 크기 등)
+    <%@ page language="java" contentType="text/html; charset=uft-8" pageEncording="UTF-8" %>
+*include 지시어 : 다른 파일을 현재 JSP페이지에 포함시킨다.
+    <%@ include file="header.jsp" %>
+*taglib : 태그 라이브러리를 현재 JSP페이지에서 사용할 수 있도록 한다.
+    <%@ taglib uri="http://java.sun.com/jsp/jst1/core" prefix="c" %>
+
+스크립트 요소(Scripting Elements) : JSP 페이지내에 자바 코드를 삽입하는데 사용된다.
+표현식(Expression) : <%= %> 사이에 위치한 코드는 자바에서의 결과 값을 반환하고, 
+    최종적으로 HTML에 포함된다. 세미콜론을 붙이지 않는다.
+    <%= "Hello World" %>
+스크립트릿(Scriptlet) : <% %> 사이에 작성된 자바 코드는 서블릿 _jspService() 메소드에서 실행
+    여기서 변수를 선언하거나 로직을 수행할 수 있다.
+    <% String name = "Hello"; %>
+    <% for(int i=0; i<10; i++) { %>
+        <p><%= i %><p>
+    <% } %>
+선언(Declaration) : <%! %> 사이의 자바 코드는 서블릿 클래스 맴버 변수, 메소드로 선언된다.
+    <%! int count = 0; %>
