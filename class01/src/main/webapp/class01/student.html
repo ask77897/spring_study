@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>성적 관리</title>
+</head>
+<body>
+	<h2>학생 추가</h2>	
+	<form action="/class01/student" method="post">
+		학생 ID : <input type="text" name="studentId"><br>
+		과목 : <input type="text" name="subject"><br>
+		성적 : <input type="number" name="grade"><br>
+		<button type="submit">추가하기</button>		
+	</form>
+	<hr>
+	<h2>학생 조회</h2>
+	<form action="/class01/student" method="get">
+		<input type="hidden" name="action" value="viewStudent">
+		학생 ID : <input type="text" name="studentId">
+		<button type="submit">성적 조회</button>
+	</form>
+	<hr>
+	<h2>성적 계산기</h2>
+	<form action="/class01/student" method="get">
+		<input type="hidden" name="action" value="calcSubject">
+		과목 : <input type="text" name="subject">
+		<button type="submit">계산하기</button>
+	</form>
+</body>
+</html>

@@ -272,6 +272,7 @@ public class ResponseServlet extends HttpServlet{
 초기화 -> init() : 서블릿 요청시 최초 1번
 종료 -> destroy() : 서블릿이 요청을 수행한 뒤 메모리에서 소멸될 때
 
+---------------------------------
 JSP(Java Server Pages)
 HTML 코드에 Java 코드를 삽입하여 동적인 웹 페이지를 생성하는 기술
 JSP는 자바 서블릿 기반으로 클라이언트의 요청에 따라 HTML, XML 등의 웹 문서를 생성한다.
@@ -313,8 +314,480 @@ JSP 지시어(Directives)
 스크립트릿(Scriptlet) : <% %> 사이에 작성된 자바 코드는 서블릿 _jspService() 메소드에서 실행
     여기서 변수를 선언하거나 로직을 수행할 수 있다.
     <% String name = "Hello"; %>
-    <% for(int i=0; i<10; i++) { %>
+    ;<% for(int i=0; i<10; i++) { %>
         <p><%= i %><p>
-    <% } %>
+    ;<% } %>
 선언(Declaration) : <%! %> 사이의 자바 코드는 서블릿 클래스 맴버 변수, 메소드로 선언된다.
     <%! int count = 0; %>
+
+------------------------------------------
+액션 태그
+JSP 액션 태그는 JSP 페이지에서 작업을 수행하는 XML 스타일 태그다.
+*jsp:include : 현재 JSP 페이지에 다른 리소스를 동적으로 포함
+    <jsp:include page="head.jsp"/>
+*jsp:forward : 요청을 다른 리소스로 전달하거나 리다이렉트한다.
+    <jsp:forward page="nextPage.jsp"/>
+*jsp:param : include, forward 등의 부모태그와 함께 사용하기 위한 쿼리 문자열을 추가할 수 있다.
+    <jsp:include page="nextPage.jsp">
+        <jsp:param name="studentId" value="1234"/>
+    </jsp:include>
+*자바 빈(Java Bean) : 스프링컨테이너가 관리하는 재사용 가능한 컴포넌트
+    jsp:useBean, jsp:setProperty, jsp:getProperty 빈 객체를 생성하고 속성 관리를 한다.
+    <jsp:useBean id="newBean" class="com.example.NewBean"/>
+    <jsp:setProperty name="newBean" property="*"/>
+
+    <jsp:getProperty name="newBean" property="name"/>
+
+*<jsp:text> : CDATA라는 섹션을 정의. 내부 텍스트는 파싱되지 않는다.
+*<jsp:fallback> : 플러그인 액션이 실패할 때 처리할 내용
+*<jsp:params> : 여러 개의 <jsp:param> 태그를 그룹화하는데 사용한다.
+
+커스텀 태그
+개발자가 직접 정의하여 사용하는 JSP 태그
+*태그 핸들러 클래스 작성 : 태그의 기능을 구현하는 자바 클래스를 작성
+    javax.servlet.jsp.tagext.Tag 인터페이스 혹은 javax.servlet.jsp.tagext.bodyTag인터페이스를 구현
+*태그 라이브러리 디스크립터(TLD) 파일 생성 : TLD 파일은 XML형식으로 태그 핸들러, 클래스에 대한 정보를 담고 있다.
+*JSP 페이지에서 커스텀 태그 사용 : <%@ taglib %> 지시어를 사용하여 TLD 파일을 참조한다.
+
+*SimpleTagHandler.java 클래스 생성
+    public class simpleTagHandler extends SimpleTagSupport{
+        @Override
+        public void doTag() throws JspException, IOException{
+            JspWriter out = getJspContext().getOut();
+            out.println("Hello World");
+        }
+    }
+*mytags.tld TLD파일 생성
+    <taglib xmlns="http://java.sun.com/xml/ns/j2ee"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee
+                                http://java.sun.com.xml/ns/j2ee/web-jsptaglibrary_2_0.xsd"
+            version="2.0">
+        <tlib-version>1.0</tlib-version>
+        <short-name>mytags</short-name>
+        <uri>http://www.example.com/mytags</uri>
+
+        <tag>
+            <name>hello</name>
+            <tag-class>com.example.SimpleTagHandler</tag-class>
+            <body-content>empty</body-content>
+        </tag>
+    </taglib>
+*JSP에서 커스텀 대그 사용
+    <%@ taglib prefix="my" uri="http://www.example.com/mytags" %>
+    <%@ taglib prefix="my" tagdir="/WEB-INF/폴더명" %>
+    
+    <my:hello/>
+
+------------------------------------
+JSTL(JSP Standard Tag Library) : 커스텀 태그의 집합
+<c: tagName> 형태로 사용되며 XML 스타일의 문법을 가진다.
+
+<%@ taglib prefix="c" uri="http://www.java.sun/xom/jsp/jstl/core" %>
+
+<c:forEach var="item" items="${list}">
+    ${item}<br>
+</c:forEach>
+
+EL(Expression Language) : 표현식 언어, 자바 객체에 쉽게 접근 가능
+${expression} 형태로 주로 변수값에 접근하거나 출력하는데 사용
+
+Hello, ${sessionScope.user.name}
+
+taglib 다운로드 : https://tomcat.apache.org/download-taglibs.cgi
+
+Core 태그 라이브러리 <c:>
+*조건문 <c:if>, <c:choose>, <c:when>, <c:otherwise>
+<c:choose>
+    <c:when text="${age >= 20}">
+        <p>성인입니다.</p>
+    </c:when>
+    <c:otherwise>
+        <p>성인이 아닙니다.</p>
+    </c:otherwise>
+</c:choose>
+
+*반복문 <c:forEach>, <c:forTokens>
+<c:forTokens var="name" items="철수,영희,길동" delims=",">
+    <p><c:out value="${name}"/></p>
+</c:forTokens>
+
+기타 태그
+<c:set> : 변수 선언 및 값 할당
+<c:remove> : 변수 삭제
+<c:catch> : 예외 처리
+
+Fomatting 태그 라이브러리
+*Locale 설정 태그 : 현재 페이지에서 사용할 로케일을 지정한다.
+    <fmt:setLocale value="EUC-KR"/>
+    <fmt:setLocale value="ko_kr"/>
+    <fmt:setLocale value="ja_jp"/>
+    <fmt:setLocale value="en_us"/>
+*메세지 번들 태그 : 번들에서 locale에 맞는 메세지를 지정한다.
+    <fmt:setBundle basename="com.example.message"/>
+*메세지 출력 태그 : 번들에서 locale에 맞는 메세지를 출력한다.
+    <fmt:messgae key="welcome.message"/>
+*형변환 태그
+    <fmt:formatNumber value="${price}" type="currency" currencySymbol="￦"/>
+*날짜 시간 형식 태그
+    <fmt:formatDate value="${date}" pattern="yyyy-MM-dd HH:mm:ss"/>
+
+SQL 태그 <sql:>
+*데이터베이스 연결 설정 태그 <sql:setDataSource>
+    var 안에 있는 이름으로 setDataSource 객체 생성
+    <sql:setDataSource var="dataSource" driver="com.mysql.jdbc.Driver" url="jdbc:mysql://localhose/mydatabase"
+    user="name" password="password"/>
+*쿼리 실행 태그 <sql:query>
+SQL SELECT문을 실행하고 결과를 가져온다.
+<sql:query var="results" dataSource="${dataSource}">
+    SELECT * FROM USER
+</sql:query>
+*쿼리 결과
+<table>
+    <c:forEach var="row" items="${results.rows}">
+        <tr>
+            <td>${row.id}</td>
+            <td>${row.name}</td>
+            <td>${row.password}</td>
+        </tr>
+    </c:forEach>
+</table>
+
+*기타 태그
+<sql:update> : INSERT, UPDATE, DELETE 등 쿼리 실행
+<sql:param> : 쿼리에 파라미터 값을 전달
+
+XML 태그 라이브러리 <x:> XML 문서를 처리하기 위한 기능
+*XML 파싱 태그 : XML 문서나 문자열을 파싱하여 DOM(Document Object Model) 객체로 만든다.
+    <x:parse xml="${xmlString}" var="doc"/>
+*XPath 검색 태그
+    <x:out select="$doc/bookstore/book[1]/title">
+*XML 조작 및 반복문 태그
+    <x:set>
+    <x:if>
+    <x:forEach>
+
+성인입니다. 코드 -> 여러명 만들어주고 성인만 이름, 나이 출력
+
+------------------------------------------------
+MVC 패턴 : 사용자 인터페이스와 비즈니스 로직을 분리하여 유지보수성이나 재사용성을 향상시킨다.
+Model, View, Controller
+*Model : Model은 데이터와 그 데이터를 처리하는 비즈니스 로직을 포함한다.
+    데이터 : 일반적으로 모델은 어플 비즈니스 도메인을 나타내는 데이터를 포함한다.
+        상품, 주문, 고객 등과 같은 개념들이 모델로 표현할 수 있다.
+    비즈니스 로직 : 데이터에 처리되어야 하는 연산과 규칙도 포함된다.
+        주문 모델 - 주문 취소, 결제 완료 등을 처리하는 메소드가 있다.
+    상태 관리 : 자기 상태를 스스로 관리한다. 해당 상태를 가른 데이터베이스에 저장하며, 읽기 및 업데이트가 가능하다.
+    변경 통지 : MVC 패턴에서 모델은 Observer 패턴을 사용하여 자신의 상태가 변했음을 Controller나 View에 통지할 수 있다.
+    독립성 : 모델은 뷰나 컨트롤러로부터 독립적이다. 뷰의 사용이나 컨트롤러의 요청에 모델 코드가 변경될 필요가 없다.
+*View : 사용자에게 보여지는 부분인 UI를 담당한다.
+    데이터 표현 : 뷰는 모델이 제공하는 데이터를 사용자에게 표현하는 것.
+    템플릿 엔진 : 스프링 MVC에서 뷰는 주로 JSP, Thymeleaf, FreeMarker 등의 서버 가이드 템플릿 엔진을 이용한다.
+        이러한 템플릿 엔진들은 동적인 웹 페이지 생성이 가능하게 하며, 서버 측에서 데이터와 함께 HTML을 생성해서 클라이언트에게 전달한다.
+    데이터 바인딩 : 뷰는 컨트롤러로부터 받은 모델 객체를 화면에 바인딩한다.
+        실제 데이터 값을 화면 요소에 연결하여 동적으로 내용을 변경할 수 있다.
+    입력 처리 : 뷰는 사용자의 입력을 받아 컨트롤러에 전달한다.
+    독립성 : MVC 패턴에서 뷰는 모델의 구조나 로직을 알 필요가 없다.
+        뷰는 단순히 컨트롤러가 전달해준 데이터를 화면에 출력하기만 하면 된다.
+*Controller : MVC 패턴에서 사용자의 요청을 처리하고 뷰에 그 결과를 전달한다.
+모델과 뷰 사이에 중개 역할을 하며, 모델을 변경하거나 변경된 상태를 뷰에 전달할 수 있다.
+    요청 처리 : 컨트롤러는 클라이언트로부터 들어오는 모든 요청을 받아들인다.
+        이 요청은 웹 어플리케이션에서 HTTP요청(GET, POST 등)으로 들어올 수 있다.
+    비즈니스 로직 : 컨트롤러는 받은 요청에 따라 모델을 호출한다.
+    View 선택 : 비즈니스 로직이 처리된 후 반환된 결과 데이터와 함께 어떤 화면을 보여줄지 결정한다.
+    모델과 뷰 연결 : 뷰에게 처리 결과 데이터(Model)를 전달한다. View 컴포넌트가 데이터와 템플릿 엔진을 사용하여 최종 HTML 페이지를 생성한다.
+    @Controller 어노테이션 : 컨트롤러 클래스를 사용하기 위해서는 어노테이션을 붙인다.
+        각 핸들러 메소드가 특정 URL 패턴에 대응되어 HTTP 요청을 처리 후 적절한 응답을 반환한다.
+    
+----------------------------------------------
+Dispatcher Servlet 
+클라이언트로부터 들어오는 모든 요청을 받아 처리하고 응답을 생성하여 반환하는 컴포넌트
+클라이언트 요청 수신 : Dispatcher Servlet은 웹 어플리케이션의 Front Controller다.
+    클라이언트로부터 들어오는ㄴ 모든 HTTP요청을 가로챈다.
+핸들러 매핑(Handler Mapping) : Dispatcher Servlet은 요청 URL과 매핑된 핸들러(컨트롤러)를 찾기위해 등록된 핸들러 매핑 구조에 따라
+    HandleMapping 객체를 사용한다. 핸들러 매핑은 어떤 컨트롤러가 해당 요청을 처리해야 하는지 결정한다.
+핸들러 실행(Handler Execution) : 선택된 핸들러를 실행하여 실제 비지니스 로직을 처리한다.
+    컨트롤러는 클라이언트의 요청을 처리하고 필요한 비즈니스 로직 및 서비스 호출등의 작업을 수행한다.
+모델 생성 및 전달 : 핸들러가 실행되면 해당 작업 결과 모델 객체로 생성하고, 뷰에 전달한다.
+    모델 객체는 사용자에게 표시될 데이터와 뷰 템플릿에서 사용될 속성 값으로 구분된다.
+뷰 결정(View Resolution) : 핸들러가 반환한 뷰 이름을 기반으로 적절한 ViewResolver 객체를 사용하여
+    실제 보여줄 뷰 템플릿을 결정한다.
+뷰 렌더링 (View Rendering) : 뷰 이름과 실제 연결되는 뷰 파일을 찾아서 모델 객체와 이정보를 뷰에 전달하여 최종적인 응답 페이지를 생성한다.
+응답 반환 : 최종적으로 생성된 응답 페이지를 HTTP 응답에 포함하여 클라이언트에게 반환한다.
+
+Dispatcher Servlet은 Spring Framework에서 중앙 집중식으로 클라이언트 요청 처리 흐름을 관리한다.
+여러 기능들(HandlerMapping, HandlerAdapter, ViewResolver 등)과 함께 협력하여 웹 어플리케이션의 개발 및 관리 작업의 수준을 높여줄 수 있다.
+
+@Configuration
+@EnbleWebMvc #Spring MVC 활성화
+public class WebConfig implements WebMvcConfigurer{
+    @Override #기본 서블릿 메소드를 활성화하여 정적 리소스 처리
+    public void configureDefaultServletHandling(DefaultServletHandlerConfigurer cinfigurer){
+        configurer.enble();
+    }
+    @Bean
+    public ViewResolver viewResolver(){ #뷰 이름과 실제 JSP파일 경로 연결
+        InternalRecourceVieResolver resolver = new InternalResourceViewResolver();
+        resolver.setPrefix("/WEB-INF/views/");
+        resolver.setSuffix(".jsp");
+        return resolver;
+    }
+    @Override # 특정 url과 뷰 이름 매핑
+    public void addViewControllers(ViewControllerRegistry registry){
+        registry.addViewControllers("/").setViewName("index");
+    }
+}
+
+public class MvcWebApplicationInitializer extends AbstractAnnotationConfigDispatcherServletInitailizer{
+    @Override
+    protected Class<?>[] getRootConfigClasses(){
+        return null;
+    }
+    @Override
+    protected Class<?>[] getServletConfigClasses(){
+        return new Class[]{WebConfig.class};
+    }
+    @Override
+    protected String[] getServletMappings(){
+        return new String[]{"/"};
+    }
+}
+
+-----------------------------------------
+서블릿 데이터 선언 
+객체 데이터를 선언했을 경우 해당 클래스의 인스턴스마다 독립적인 객체를 생성한다.
+서블릿은 보통 웹 어플리케이션 실행동안 단 한번 인스턴스화 된다.
+
+만들었던 로그인 페이지의 경우 뷰 3개, 컨트롤러(서블릿) 1개, 모델 1개로 이루어져있다.
+
+클래스 추가 UserDao.java
+public class UserDao{
+    private List<User> lst = new ArrayList<>;
+}
+
+private UserDao userdao = new UserDao();
+userdao.lst
+
+--------------------------------------
+JDBC(Java Database Connetivity)
+자바 프로그래밍 언어에서 데이터베이스 접근할 수 있게 해주는 API
+JDBC는 sql 기반의 데이터베이스 유니버셜 접근 방식을 제공하며, 개발자들은 RDBMS에 연결하고 SQL을 실행가능하다.
+*데이터베이스 독립성 : 개발자가 특정 데이터베이스에 종속되지 않고, 여러가지 데이터베이스 시스템과 상호작용할 수 있도록 도와준다.
+    Oracle, MySQL, MariaDB, PostgreSQL, 등 다양한 RDBMS와 연결할 수 있도록 도와준다.
+*SQL 지원 : Structured Query Language를 사용하여 데이터 조작 및 검색을 도와준다.
+*데이터 엑세스 간소화 : JDBS API를 사용하면 복잡한 네트워크 프로토콜이나 DBMS 인터페이스를 직접 처리하지 않아도 된다.
+*작동 프로세스
+    드라이버 로드 : RDBMS에 맞는 JDBC 드라이버를 로드한다. 이 드라이버는 해당 DBMS와 어플리케이션 사이 통신 역할
+    연결 생성 : 드라이버가 로드되면 DriverManager.getConnection() 메소드를 호출하여 DBMS와의 연결을 생성
+    SQL 문장 실행 : Connection 객체로부터 Statement 또는 PreparedStatement 객체를 생성하고, executeQuery()
+        또는 executeUpdate() 메소드로 SQL문장을 실행한다.
+    결과 처리 : SELECT 문의 결과인 ResultSet 객체에서 데이터 읽기 및 처리하기, INSERT/UPDATE/DELETE문을 처리
+    연결 종료 : Connection 객체 닫기
+
+JDBC 드라이버 로드
+JDBC 드라이버는 각 데이터베이스 벤더에 따라 다르며, 해당 벤더에서 제공하는 라이브러리 형태로 제공된다.
+Oracle 데이터베이스에 접속하려면 Oracle JDBC 드라이버가 필요하다.
+MySQL에 접속하려면 MySQL JDBC 드라이버가 필요하다.
+
+Class.forName()
+가장 일반적인 방식으로 특정 클래스 이름을 문자열로 전달하고 클래스를 메모리에 로드한다.
+해당 클래스의 정적 초기화 블록(static initailizer)가 실행되며 대부분 JDBC 드라이버는 이 초기화 블록에서
+자신을 DriverManager에 등록한다.
+Class.forName("com.mysql.jdbc.Driver");
+
+DriverManager.registerDriver()
+직접 드라이버 객체를 생성하여 DriverManager에 등록하는 방식
+DriverManager.registerDriver(new com.mysql.jdbc.Driver());
+
+두 가지 모두 목표는 JVM 내부에 사용 가능한 JDBC 드라이버 리스트에 특정 데이터베이스 연결을 위한 JDBC 드라이버를 등록하는 것이다.
+
+public class NewServletContextListener implements ServletContextListener{
+    @Override
+    public void contextDestroyed(ServletContextEvent sce){
+        Enumeration<Driver> driver = DriverManager.getDrivers();
+        while(drivers.hasMoreElements()){
+            Driver driver = driver.nextElement();
+            try{
+                DriverManager.deregisterDriver(driver);
+            }catch(SQLException e){
+                sysout(e);
+            }
+        }
+    }
+}
+
+데이터베이스 연결
+DriverManager.getConnection() 메소드를 사용하여 데이터베이스에 연결한다. (데이터베이스 URL, 사용자이름, 비밀번호)
+Connection conn = DriverManager.getConnection(url, username, password);
+username과 password는 데이터 베이스 계정과 비밀번호다.
+url은 특정 데이터베이스 시스템에 접근하기 위한 문자열 jdbc:subprotocol:subname 형식이다.
+MySQL : jdbc:mysql://localhost:3306/mydb
+Oracle : jdbc:oracle:thin:@localhost:1521:mydb
+
+데이터베이스 연결과정에서 여러가지 오류(네트워크 문제, 잘못된 인증 정보 등)가 발생할 수 있어 예외처리와 함께 써주는 것이 좋다.
+try{
+        Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/mydb", "MySQL", "0000");
+    }catch(SQLException e){
+        sysout(e);
+    }
+
+결과 처리
+*SELECT문 : ResultSet 객체를 활용
+    SELECT문은 데이터베이스에서 정보를 조회하는데 사용된다. 이 결과는 ResultSet 객체에 반환된다.
+    ResultSet은 테이블 형태의 데이터 구조로, 각 열은 테이블 컬럼을, 각 행은 하나의 레코드를 나타낸다.
+    ResultSet.nexxt() 메소드를 사용하여 각 행을 순회하고, get 메소드를 사용하여 해당 행 칼럼 값을 추출할 수 있다.
+    State stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("SELECT * FROM employees")
+
+    while(rs.next()){
+        String name = rs.getString("name");
+        int age = rs.getInt("age");
+    }
+
+*INSERT, UPDATE, DELETE 등의 DML문 : 영향 받은 행 개수
+    DML(Data Manipulation Language)문은 데이터베이스 내부를 변경하는데 사용되며 이러한 쿼리들의 영향을 받은 행 수다.
+    이 값은 executeUpdate() 메소드 호출 시 정수형으로 반환된다.
+    Statement stmt = conn.createStatement();
+    int affectedRows = stmt.executeUpdate("UPDATE employees SET age = 30 WHERE name = 'Adam'");
+
+    System.out.println(affectedRows + " rows updated");
+
+자원 해제 : JDBC를 사용하여 데이터베이스 작업을 하면 여러가지 리소스가 발생한다.
+    Connection, Statement, PreparedStatement, ResultSet 이러한 객체들이 모두 시스템 리소스를 차지한다.
+    그래서 사용 후 해제하지 않으면 메모리 누수와 같은 문제가 발생할 수 있다. 명시적으로 닫아줘야한다. close()
+    ResultSet rs = null;
+    Statement stmt = null;
+    Connection conn = null;
+
+    try{
+        //데이터베이스 작업
+    }catch(SQLException e){
+        //예외 처리
+    }finally{
+        if(rs != null){
+            try{
+                rs.close();
+            }catch(SQLException e2){}
+        }
+        if(stmt != null){
+            try{
+                stmt.close();
+            }catch(SQLException e3){}
+        }
+        if(conn != null){
+            try{
+                conn.close();
+            }catch(SQLException e4){}
+        }
+    }
+
+자바 7부터 try-with-resources라는 구문을 사용할 수 있다.
+try(
+    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/test", "username", "password")
+    Statement stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("SELECT * FROM employees");
+){
+    while(rs.next()){
+
+    }
+    while(stmt.next()){
+
+    }
+    while(conn.next()){
+
+    }
+}caatch(SQLException e){
+    //예외 처리
+}
+
+try 블록이 종료될 때 객체가 자동으로 닫힌다. finally 블록 없이 안전하게 리소스 해제가 가능하다.
+
+예외 처리
+java.sql.SQLException 클래스 혹은 하위 클래스로 예외들이 대부분 처리된다.
+*getMessage() : 오류 메세지 반환
+*getSQLState() : SQL 상태 코드 반환
+*getErrorCode() : 벤더별 에러 코드 반환
+try{
+    //JDBC 작업
+}catch(SQLException e){
+    System.errprintln("SQL State : " + e.getSQLState());
+    System.errprintln("Error Code : " + e.getErrorCode());
+    System.errprintln("Message : " + e.getMessage());
+    Throwable t = ex.getCause();
+    while(t != null){
+        System.out.println("Cause : " + t);
+        t = t.getCause();
+    }
+}
+
+추가 사항
+*커넥션 풀링(Connection Pooling)
+    데이터베이스 연결은 생성하고 종료하는 상당한 시간과 리소스가 소모된다.
+    커넥션 풀링은 이러한 부담을 줄이기 위해 미리 여러개의 데이터베이스 연결을 생성해두고 필요할 때 제공하고
+    사용 후에는 다시 풀로 반환하는 방식으로 사용된다. 이를 통해 어플리케이션 성능, 확장성이 크게 향상된다.
+    대표적 커넥션 풀 라이브러리는 HikaraCP, Apache DBCP 등이 있다. 
+*트랜젝션 관리(Transaction Management) : JDBC는 Connection객체를 통해 데이터 트랜젝션을 관리할 수 있다.
+    setAutoCommit(false)를 호출하여 자동 커밋 기능을 해제하고, commit() 메소드와 rollback() 메소드를 사용하여
+    직접 커밋 혹은 롤백을 수행할 수 있다.
+try{
+    conn.setAutoCommit(false);
+    conn.commit();
+}catch(SQLException e){
+    if(conn != null){
+        try{
+            conn.rollback();
+        }catch(SQLException e2){}
+    }
+}
+
+*배치 처리(Batch Processing) : 한 번에 많은 양의 SQL 쿼리를 실행해야 할 경우 배치 처리 기능을 사용하여
+    성능을 크게 개선할 수 있다. Statement나 PreparedStatement 객체에서 addBatch() 메소드로 SQL 문장들을
+    배치에 추가하고, executeBatch() 메소드로 한 번에 모든 문장들을 실행한다.
+try{
+    conn.setAutoCommit(false);
+    Statement stmt = conn.createStatement();
+
+    stmt.addBatch("INSERT INTO employees VALUES (1, 'ADAM')");
+    stmt.addBatch("INSERT INTO employees VALUES (2, 'BEN')");
+
+    int[] updateCounts = stmt.executeBatch();
+}catch(SQLException e){}
+
+DAO(Data Access Object) : 데이터베이스에 접근하는 코드를 캡슐화하는 역할
+    DAO 패턴은 데이터베이스 연결 및 SQL 쿼리 실행 등과 같은 로우 레벨의 작업을 숨기고, 대신에 더 고차원 인터페이스를 제공한다.
+    DAO는 일반적으로 create(), read(), update(), delete() 같은 메소드들을 제공한다.
+    장점
+    *데이터 접근 로직 분리 : 데이터 접근을 비즈니스 로직으로부터 분리시킨다.
+        비즈니스 로직은 변경 없이 동일한 DAO 인터페이스를 사용하여 다양한 종류의 데이터 소스와 상호작용 가능
+    *유지보수 : 모든 데이터 접근 코드가 한 곳에 모여 있어 유지보수가 용이하다.
+    *재사용성 : CRUD 작업이 동일하게 이루어질때, DAO를 재사용할 수 있다.
+    *테스트 : 실제 DB 대신 Mock 객체를 사용하여 테스트할 수 있어서 테스트가 간단, 수월하다.
+    
+    단점 : 개발 시간 증가, 각 테이블 혹은 엔티티 별로 DAO 클래스 혹은 인터페이스가 필요하다.
+
+DTO(Data Trasfer Object) : 데이터를 객체 형태로 전달하는 역할
+    로직을 가지지 않은 순수한 데이터 객체이며, getter/setter 메소드와 함께 여러 개의 인스턴스 변수를 가진다.
+    *레이어 간 데이터 교환 :  시스템 내 다른 레이어 간에(컨트롤러와 서비스 레이어) 데이터를 전송할 때 DTO가 사용된다.
+        각 레이어는 독립적으로 변경되기 때문에 이들 사이의 결합도(coupling)을 최소화하기 위해 DTO를 쓴다.
+    *데이터베이스 행 전송 : 한 행의 데이터 베이스 레코드를 나타내기 위해서 DTO를 쓸 수 있다.
+    *클라이언트-서버 통신 : 웹 API에서 클라이언트와 서버 사이의 JSON형식으로 데이터를 주고 받을 때 DTO를 쓴다.
+    *구조 단순화 : 복잡한 모델에서 필요한 정보만 추출하여 단순화된 형태로 제공될 때 DTO를 쓴다.
+
+엔티티(Entity) : 데이터베이스의 테이블을 대표하는 클래스를 의미한다.
+엔티티는 데이터베이스의 테이블에서 각각의 행(row)을 나타내며, 이러한 엔티티는 ORM(Object-Relational Mapping)
+프레임워크에 의해 관리된다.
+    *식별성 : 각 엔티티 인스턴스는 유일한 식별자(ID)를 가지고 있다. ID는 데이터베이스 테이블의 기본키에 매핑된다.
+    *영속성 : 엔티티 인스턴스들을 영속성 컨텍스트라 불리는 캐시에 저장되며 이 컨텍스트와 연관된 세션 또는 트랜젝션동안 지속된다.
+    *상태관리 : ORM 프레임워크는 엔티티 인스턴스들의 상태 변화를 추적하고 필요할 때, 데이터베이스와 동기화한다.
+    @Entity
+    public class User{
+        @Id
+        @GeneratedValue(strategy = GenerationType.AUTO)
+        private Long id;
+
+        private String username;
+        private String password;
+
+        //getter setter...
+    }
+https://dev.mysql.com/downloads/connector/j/
